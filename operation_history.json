@@ -1,0 +1,28 @@
+[
+  {
+    "id": "3707eca9-d26a-44d1-80c0-e4e0bbf7034f",
+    "folder": "demo",
+    "operations": [
+      {
+        "source": "expenses.csv",
+        "destination": "Spreadsheets\\clean_expenses.csv"
+      }
+    ],
+    "undone": true
+  },
+  {
+    "id": "96e3d03e-905c-4397-bbbf-92f6a72ccd1c",
+    "folder": "demo",
+    "operations": [
+      {
+        "source": "expenses.csv",
+        "destination": "Spreadsheets\\clean_expenses.csv"
+      },
+      {
+        "source": "notes.txt",
+        "destination": "Documents\\clean_notes.txt"
+      }
+    ],
+    "undone": true
+  }
+]

@@ -1,0 +1,623 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaterLess — Let AI Handle the Busywork</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f5f7fb;
+            color: #202938;
+        }
+
+        header {
+            background: #172554;
+            color: white;
+            padding: 24px 7%;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 30px;
+        }
+
+        header p {
+            margin: 8px 0 0;
+            color: #c7d2fe;
+        }
+
+        main {
+            max-width: 1000px;
+            margin: 35px auto;
+            padding: 0 20px;
+        }
+
+        .intro, .panel {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 22px;
+            box-shadow: 0 5px 18px #0f172a08;
+        }
+
+        .intro h2 {
+            margin-top: 0;
+        }
+
+        .muted {
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 8px;
+            padding: 12px 18px;
+            background: #4f46e5;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #3730a3;
+        }
+
+        button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        button.secondary:hover {
+            background: #cbd5e1;
+        }
+
+        #status {
+            margin-top: 18px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            background: #eef2ff;
+            color: #3730a3;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .file-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .file-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            overflow-wrap: anywhere;
+        }
+
+        .file-card strong {
+            display: block;
+            margin-bottom: 7px;
+        }
+
+        .file-card label {
+            display: flex;
+            gap: 9px;
+            align-items: flex-start;
+            cursor: pointer;
+        }
+
+        .file-card input {
+            margin-top: 4px;
+        }
+
+        .suggestion {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 7px;
+            background: #f8fafc;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .warning {
+            color: #92400e;
+            background: #fffbeb;
+            padding: 12px;
+            border-radius: 8px;
+            line-height: 1.5;
+        }
+
+        footer {
+            text-align: center;
+            padding: 24px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding: 22px;
+            }
+
+            header h1 {
+                font-size: 25px;
+            }
+
+            .intro, .panel {
+                padding: 18px;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>LaterLess</h1>
+        <p>Let your local AI handle the busywork.</p>
+    </header>
+
+    <main>
+        <section class="intro">
+            <h2>A calmer way to organize files.</h2>
+
+            <p class="muted">
+                LaterLess uses your local Ollama AI to suggest sensible
+                file categories and cleaner names. Review the suggestions
+                before approving any changes.
+            </p>
+
+            <div class="warning">
+                <strong>Safe workspace:</strong>
+                This demo works only with files inside the project's
+                <code>sample_files</code> folder. Review every suggestion
+                before organizing.
+            </div>
+
+            <div class="actions">
+                <button id="healthBtn">Check AI connection</button>
+                <button id="scanBtn">Scan sample files</button>
+                <button id="suggestBtn" disabled>
+                    Suggest organization
+                </button>
+            </div>
+
+            <div id="status" role="status" aria-live="polite">
+                Connecting to LaterLess...
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>1. Your files</h2>
+
+            <p class="muted">
+                Add test files to sample_files/demo, then scan again.
+                Select the files you want the AI to organize.
+            </p>
+
+            <div id="files" class="file-list">
+                No files scanned yet.
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>2. Review AI suggestions</h2>
+
+            <p class="muted">
+                Suggestions are not applied automatically. Select the
+                changes you approve before proceeding.
+            </p>
+
+            <div id="suggestions" class="file-list">
+                No suggestions yet.
+            </div>
+
+            <div class="actions">
+                <button id="selectAllBtn" class="secondary">
+                    Select all suggestions
+                </button>
+
+                <button id="organizeBtn" disabled>
+                    Apply approved changes
+                </button>
+
+                <button id="undoBtn" class="secondary" disabled>
+                    Undo last operation
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        LaterLess · Open-source AI · Local-first file organization
+    </footer>
+
+    <script>
+        const FOLDER = "demo";
+
+        const statusBox = document.getElementById("status");
+        const filesBox = document.getElementById("files");
+        const suggestionsBox = document.getElementById("suggestions");
+
+        let scannedFiles = [];
+        let suggestions = [];
+        let lastPlanId = null;
+
+        function setStatus(message) {
+            statusBox.textContent = message;
+        }
+
+        async function api(path, options = {}) {
+            const response = await fetch(path, {
+                ...options,
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(options.headers || {})
+                }
+            });
+
+            let data;
+
+            try {
+                data = await response.json();
+            } catch {
+                throw new Error("The server returned an invalid response.");
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    data.error || "Request failed. Please try again."
+                );
+            }
+
+            return data;
+        }
+
+        function showError(error) {
+            setStatus("Error: " + error.message);
+        }
+
+        async function checkHealth() {
+            setStatus("Checking the local AI connection...");
+
+            try {
+                const data = await api("/api/health");
+
+                const ollamaStatus = !data.available
+                    ? "Not available"
+                    : data.model_installed
+                        ? "Available"
+                        : "Running, but model not installed";
+
+                setStatus(
+                    "Server: connected\n" +
+                    "Ollama: " + ollamaStatus + "\n" +
+                    "Model: " + (data.model || "qwen2.5-coder:3b")
+                );
+            } catch (error) {
+                showError(error);
+            }
+        }
+
+        async function scanFiles() {
+            setStatus("Scanning the safe sample workspace...");
+
+            document.getElementById("scanBtn").disabled = true;
+
+            try {
+                const data = await api("/api/scan", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        folder: FOLDER
+                    })
+                });
+
+                scannedFiles = Array.isArray(data.files)
+                    ? data.files
+                    : [];
+
+                suggestions = [];
+
+                renderFiles();
+                renderSuggestions();
+
+                document.getElementById("suggestBtn").disabled =
+                    scannedFiles.length === 0;
+
+                setStatus(
+                    "Scan complete. Found " +
+                    scannedFiles.length + " file(s)."
+                );
+            } catch (error) {
+                showError(error);
+            } finally {
+                document.getElementById("scanBtn").disabled = false;
+            }
+        }
+
+        function renderFiles() {
+            filesBox.replaceChildren();
+
+            if (scannedFiles.length === 0) {
+                filesBox.textContent =
+                    "No supported files found. Add files to " +
+                    "sample_files/demo and scan again.";
+                return;
+            }
+
+            scannedFiles.forEach((file, index) => {
+                const card = document.createElement("div");
+                card.className = "file-card";
+
+                const label = document.createElement("label");
+                const checkbox = document.createElement("input");
+
+                checkbox.type = "checkbox";
+                checkbox.className = "file-choice";
+                checkbox.checked = true;
+                checkbox.dataset.index = index;
+
+                const name = document.createElement("span");
+                name.textContent = file.name || "Unnamed file";
+
+                label.append(checkbox, name);
+                card.append(label);
+
+                if (file.size_bytes !== undefined) {
+                    const detail = document.createElement("p");
+                    detail.className = "muted";
+                    detail.textContent =
+                        "Size: " + file.size_bytes + " bytes";
+                    card.append(detail);
+                }
+
+                filesBox.append(card);
+            });
+        }
+
+        function selectedFiles() {
+            return [
+                ...document.querySelectorAll(".file-choice:checked")
+            ].map(box => scannedFiles[Number(box.dataset.index)]);
+        }
+
+        async function getSuggestions() {
+            const chosen = selectedFiles();
+
+            if (chosen.length === 0) {
+                setStatus("Select at least one file first.");
+                return;
+            }
+
+            setStatus("Asking your local AI for suggestions...");
+
+            document.getElementById("suggestBtn").disabled = true;
+
+            try {
+                const data = await api("/api/suggest", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        folder: FOLDER,
+                        files: chosen
+                    })
+                });
+
+                const allSuggestions = Array.isArray(data.suggestions)
+                    ? data.suggestions
+                    : [];
+
+                // Show suggestions only for files selected by the user.
+                const chosenNames = new Set(
+                    chosen.map(file => file.name)
+                );
+
+                suggestions = allSuggestions.filter(item =>
+                    chosenNames.has(item.original_name)
+                );
+
+                renderSuggestions();
+
+                setStatus(
+                    suggestions.length > 0
+                        ? "AI suggestions ready. Review them before applying changes."
+                        : (data.message || "No suggestions were returned.")
+                );
+            } catch (error) {
+                showError(error);
+            } finally {
+                document.getElementById("suggestBtn").disabled =
+                    scannedFiles.length === 0;
+            }
+        }
+
+        function renderSuggestions() {
+            suggestionsBox.replaceChildren();
+
+            if (suggestions.length === 0) {
+                suggestionsBox.textContent = "No suggestions yet.";
+                document.getElementById("organizeBtn").disabled = true;
+                return;
+            }
+
+            suggestions.forEach((item, index) => {
+                const card = document.createElement("div");
+                card.className = "file-card";
+
+                const label = document.createElement("label");
+                const checkbox = document.createElement("input");
+
+                checkbox.type = "checkbox";
+                checkbox.className = "suggestion-choice";
+                checkbox.checked = true;
+                checkbox.dataset.index = index;
+
+                const title = document.createElement("strong");
+                title.textContent = item.original_name || "Unnamed file";
+
+                label.append(checkbox, title);
+                card.append(label);
+
+                const details = document.createElement("div");
+                details.className = "suggestion";
+
+                details.textContent =
+                    "Category: " + (item.category || "Other") + "\n" +
+                    "Suggested name: " +
+                    (item.suggested_name || item.original_name || "Unchanged") +
+                    (item.reason ? "\nReason: " + item.reason : "");
+
+                card.append(details);
+                suggestionsBox.append(card);
+            });
+
+            document.getElementById("organizeBtn").disabled = false;
+        }
+
+        async function organizeFiles() {
+            const approved = [
+                ...document.querySelectorAll(".suggestion-choice:checked")
+            ].map(box => suggestions[Number(box.dataset.index)]);
+
+            if (approved.length === 0) {
+                setStatus("Select at least one approved suggestion.");
+                return;
+            }
+
+            const confirmed = confirm(
+                "Apply the selected file changes? " +
+                "You can try to undo this operation afterwards."
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            setStatus("Applying approved changes...");
+            document.getElementById("organizeBtn").disabled = true;
+
+            try {
+                const data = await api("/api/organize", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        folder: FOLDER,
+                        suggestions: approved
+                    })
+                });
+
+                // Save the operation ID required by the backend's undo API.
+                lastPlanId = data.plan_id || null;
+
+                document.getElementById("undoBtn").disabled =
+                    !lastPlanId;
+
+                setStatus(
+                    (data.message || "Organization complete.") +
+                    (lastPlanId
+                        ? "\nUndo is available for this operation."
+                        : "\nThe server did not return an operation ID; undo is unavailable.")
+                );
+
+                await scanFiles();
+            } catch (error) {
+                showError(error);
+            } finally {
+                document.getElementById("organizeBtn").disabled =
+                    suggestions.length === 0;
+            }
+        }
+
+        async function undoOperation() {
+            if (!lastPlanId) {
+                setStatus(
+                    "There is no saved operation to undo. " +
+                    "Organize files first."
+                );
+                return;
+            }
+
+            const confirmed = confirm(
+                "Try to undo the last organization operation?"
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            setStatus("Undoing the last operation...");
+            document.getElementById("undoBtn").disabled = true;
+
+            try {
+                const data = await api("/api/undo", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        plan_id: lastPlanId
+                    })
+                });
+
+                lastPlanId = null;
+
+                setStatus(data.message || "Undo complete.");
+
+                await scanFiles();
+            } catch (error) {
+                showError(error);
+
+                // Keep the operation ID so the user can retry if appropriate.
+                document.getElementById("undoBtn").disabled =
+                    !lastPlanId;
+            }
+        }
+
+        document.getElementById("healthBtn")
+            .addEventListener("click", checkHealth);
+
+        document.getElementById("scanBtn")
+            .addEventListener("click", scanFiles);
+
+        document.getElementById("suggestBtn")
+            .addEventListener("click", getSuggestions);
+
+        document.getElementById("organizeBtn")
+            .addEventListener("click", organizeFiles);
+
+        document.getElementById("undoBtn")
+            .addEventListener("click", undoOperation);
+
+        document.getElementById("selectAllBtn")
+            .addEventListener("click", () => {
+                document.querySelectorAll(".suggestion-choice")
+                    .forEach(box => {
+                        box.checked = true;
+                    });
+            });
+
+        checkHealth();
+    </script>
+</body>
+</html>
